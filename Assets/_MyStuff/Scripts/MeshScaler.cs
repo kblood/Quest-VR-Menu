@@ -34,19 +34,33 @@ public class MeshScaler : MonoBehaviour
 
     public void SnapMeshToFloor()
     {
-        var meshes = this.transform.GetComponentsInChildren<MeshFilter>();
+        var meshes = GetComponentsInChildren<MeshFilter>().ToList();
+        if(TryGetComponent<MeshFilter>(out var meshFilter))
+            meshes.Add(meshFilter);
 
         if (!meshes.Any())
         {
             Debug.Log("No gltf meshes found.");
             return;
-
         }
         // Recalculate min Y value now that the mesh has been rescaled
         float minY = meshes.SelectMany(m => m.mesh.vertices).Min(v => transform.TransformPoint(v).y);
         print("Lowest y: " + minY);
         // Snap the mesh to the floor
         transform.position = new Vector3(transform.position.x, transform.position.y - minY, transform.position.z);
+    }
+
+    public void SimplifyMesh(float quality = 0.5f)
+    {
+        var meshFilter = GetComponent<MeshFilter>();
+        if(meshFilter == null)
+            meshFilter = GetComponentInChildren<MeshFilter>();
+        var sourceMesh = meshFilter.sharedMesh;
+        var meshSimplifier = new UnityMeshSimplifier.MeshSimplifier();
+        meshSimplifier.Initialize(sourceMesh);
+        meshSimplifier.SimplifyMesh(quality);
+        var destMesh = meshSimplifier.ToMesh();
+        meshFilter.sharedMesh = destMesh;
     }
 
     public void ScaleMesh()
@@ -71,10 +85,10 @@ public class MeshScaler : MonoBehaviour
             size += Vector3.Scale(mesh.transform.lossyScale, mesh.mesh.bounds.size);
         }
         //print("Full mesh size is: " + size.magnitude);
-        if (size.magnitude > 10 || size.magnitude < 1)
+        if (size.magnitude > 5 || size.magnitude < 1)
         {
             print("Scaling mesh with magnitude " + size.magnitude);
-            transform.localScale = (transform.localScale / size.magnitude) * 10;
+            transform.localScale = (transform.localScale / size.magnitude) * 5;
         }
 
         

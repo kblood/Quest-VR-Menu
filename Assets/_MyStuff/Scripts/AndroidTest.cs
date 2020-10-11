@@ -32,7 +32,7 @@ public class AndroidTest : MonoBehaviour
         timer = 10;
         try
         {
-#if !UNITY_EDITOR
+//#if !UNITY_EDITOR
 
             AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
             AndroidJavaObject currentActivity = jc.GetStatic<AndroidJavaObject>("currentActivity");
@@ -56,6 +56,7 @@ public class AndroidTest : MonoBehaviour
                 try
                 {
                     //try to add the variables to the next entry
+                    //links[i] = pm.Call<AndroidJavaObject>("getLaunchIntentForPackage", currentObject.Get<AndroidJavaObject>("processName"));
                     links[i] = pm.Call<AndroidJavaObject>("getLaunchIntentForPackage", currentObject.Get<AndroidJavaObject>("processName"));
                     names[i] = pm.Call<string>("getApplicationLabel", currentObject);
                     text.text = text.text+", "+  names[i];
@@ -63,6 +64,18 @@ public class AndroidTest : MonoBehaviour
                     Debug.Log("(" + ii + ") " + i + " " + names[i]);
                     string packageName = names[i];
                     appObjects.Add(new AppObject() { Name = names[i], Link = links[i], Icon = icons[i] });
+
+
+
+                    AndroidJavaObject intent = currentActivity.Call<AndroidJavaObject>("getIntent");
+                    bool hasExtra = intent.Call<bool>("hasExtra", "arguments");
+                    string arguments = "";
+                    if (hasExtra)
+                    {
+                        AndroidJavaObject extras = intent.Call<AndroidJavaObject>("getExtras");
+                        arguments = extras.Call<string>("getString", "arguments");
+                    }
+
 
                     //go to the next app and entry
                     i++;
@@ -75,7 +88,7 @@ public class AndroidTest : MonoBehaviour
                     ii++;
                 }
         }
-#endif
+//#endif
 
 #if UNITY_EDITOR
 
@@ -93,7 +106,7 @@ public class AndroidTest : MonoBehaviour
             //Debug.Log("app info length: " + names.Length);
             //Debug.Log("app info: " + names.Select(x => x.ToString()).Aggregate((x, y) => x + "," + y));
             //text.SetText(names.Select(x => x.ToString())?.Aggregate((x, y) => x + "," + y));
-
+            
             System.Random random = new System.Random(DateTime.Now.Second);
             //System.Random random = new System.Random(3);
 
@@ -197,7 +210,6 @@ public class AndroidTest : MonoBehaviour
             if (gltf.Any())
                 scrollText.text = gltf.Select(g => g.name).Aggregate((x, y) => x + ", " + y);
         }
-        
     }
 
     public void launchApp(AppObject appobj)
